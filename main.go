@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -135,6 +136,7 @@ func main() {
 			continue
 		}
 
+		log.Printf("Downloading image %d.", id)
 		webPageUrl := "https://xkcd.com/" + strconv.Itoa(id) + "/info.0.json"
 		imageUrlTarget := `"img": "`
 		
@@ -185,6 +187,7 @@ func main() {
 			continue
 		}
 		
+		log.Printf("Image %d downloaded successfully.", id)
 		downloadedImages[id] = true
 		file.WriteString(strconv.Itoa(id) + " ")
 		
