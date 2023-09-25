@@ -123,36 +123,31 @@ func TestCalculateMD5(t *testing.T) {
 }
 
 func TestWriteBufferToFile(t *testing.T) {
-	tmpFile, err := os.CreateTemp("", "testfile-*.txt")
+	content := "This is a test."
+
+	tempFile, err := os.CreateTemp("", "testfile_*.txt")
 	if err != nil {
-		t.Fatalf("Failed to create a temporary file: %v", err)
+		t.Errorf("Error creating temporary file: %v", err)
+		return
 	}
-	defer os.Remove(tmpFile.Name())
-	defer tmpFile.Close()
+	defer tempFile.Close()
+	defer os.Remove(tempFile.Name())
 
-	data := "Hello, World!"
+	buffer := bytes.NewBufferString(content)
 
-	buffer := bytes.NewBufferString(data)
-
-	err = WriteBufferToFile(tmpFile.Name(), buffer)
+	err = WriteBufferToFile(tempFile.Name(), "", buffer)
 	if err != nil {
-		t.Fatalf("Expected no error, got %v", err)
-	}
-
-	file, err := os.Open(tmpFile.Name())
-	if err != nil {
-		t.Fatalf("Error opening the file: %v", err)
-	}
-	defer file.Close()
-
-	fileContentBuffer := &bytes.Buffer{}
-
-	_, err = io.Copy(fileContentBuffer, file)
-	if err != nil {
-		t.Fatalf("Error copying file content: %v", err)
+		t.Errorf("Error writing buffer to file: %v", err)
 	}
 
-	if fileContentBuffer.String() != data {
-		t.Errorf("Expected file content '%s', got '%s'", data, fileContentBuffer.String())
+	fileContent, err := os.ReadFile(tempFile.Name())
+	if err != nil {
+		t.Errorf("Error reading file: %v", err)
+		return
+	}
+
+	expectedContent := []byte(content)
+	if !bytes.Equal(fileContent, expectedContent) {
+		t.Errorf("File content does not match expected content.")
 	}
 }

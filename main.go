@@ -89,8 +89,10 @@ func CalculateMD5(data bytes.Buffer) (string, error) {
 }
 
 // WriteBufferToFile writes the content of a buffer to a file.
-func WriteBufferToFile(fileName string, buffer *bytes.Buffer) error {
-	file, err := os.Create(fileName)
+func WriteBufferToFile(fileName , fileDir string, buffer *bytes.Buffer) error {
+	filePath := fileDir + fileName
+
+	file, err := os.Create(filePath)
 	if err != nil {
 		return err
 	}
@@ -102,7 +104,15 @@ func WriteBufferToFile(fileName string, buffer *bytes.Buffer) error {
 }
 
 func main() {
-	filename := "Image_History.txt"
+
+	dirPath := "images"
+
+    if err := os.MkdirAll(dirPath, 0755); err != nil {
+        fmt.Println("Error creating directory:", err)
+        return
+    }
+
+	filename := "History.txt"
 	file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		fmt.Println("Error: ", err)
@@ -116,65 +126,67 @@ func main() {
 		return
 	}
 
-	for id := 1; id <= 2826; id++{
+	for id := 1; id <= 15; id++{
 
 		exist := downloadedImages[id]
 
 		if exist {
 			fmt.Printf("Image %v already downloaded.\n", id)
-		} else {
-			webPageUrl := "https://xkcd.com/" + strconv.Itoa(id) + "/info.0.json"
-			imageUrlTarget := `"img": "`
-			
-			response, err := GetPageContent(webPageUrl)
-			if err != nil {
-				fmt.Println("Error:", err)
-				continue
-			}
-			defer response.Body.Close()
-
-			htmlWebPage, err := io.ReadAll(response.Body)
-			if err != nil {
-				fmt.Println("Error:", err)
-				return
-			}
-
-			imageUrl, err := GetImageUrl(string(htmlWebPage), imageUrlTarget)
-			if err != nil {
-				fmt.Println("Error:", err)
-				continue
-			}
-
-			response, err = GetPageContent(imageUrl)
-			if err != nil {
-				fmt.Println("Error:", err)
-				continue
-			}
-			defer response.Body.Close()
-
-			var imageData bytes.Buffer
-			_, err = io.Copy(&imageData, response.Body)
-			if err != nil {
-				fmt.Println("Error:", err)
-				continue
-			}
-
-			md5Hash, err := CalculateMD5(imageData)
-			if err != nil {
-				fmt.Println("Error:", err)
-				continue
-			}
-
-			fileName := md5Hash + ".png"
-
-			err = WriteBufferToFile(fileName, &imageData)
-			if err != nil {
-				fmt.Println("Error:", err)
-				continue
-			}
-
-			downloadedImages[id] = true
-			file.WriteString(strconv.Itoa(id) + " ")
+			continue
 		}
+
+		webPageUrl := "https://xkcd.com/" + strconv.Itoa(id) + "/info.0.json"
+		imageUrlTarget := `"img": "`
+		
+		response, err := GetPageContent(webPageUrl)
+		if err != nil {
+			fmt.Println("Error:", err)
+			continue
+		}
+		defer response.Body.Close()
+		
+		htmlWebPage, err := io.ReadAll(response.Body)
+		if err != nil {
+			fmt.Println("Error:", err)
+			continue
+		}
+		
+		imageUrl, err := GetImageUrl(string(htmlWebPage), imageUrlTarget)
+		if err != nil {
+			fmt.Println("Error:", err)
+			continue
+		}
+		
+		response, err = GetPageContent(imageUrl)
+		if err != nil {
+			fmt.Println("Error:", err)
+			continue
+		}
+		defer response.Body.Close()
+		
+		var imageData bytes.Buffer
+		_, err = io.Copy(&imageData, response.Body)
+		if err != nil {
+			fmt.Println("Error:", err)
+			continue
+		}
+		
+		md5Hash, err := CalculateMD5(imageData)
+		if err != nil {
+			fmt.Println("Error:", err)
+			continue
+		}
+		
+		fileName := md5Hash + ".png"
+		
+		err = WriteBufferToFile(fileName,"images/", &imageData)
+		if err != nil {
+			fmt.Println("Error:", err)
+			continue
+		}
+		
+		downloadedImages[id] = true
+		file.WriteString(strconv.Itoa(id) + " ")
+		
 	}
 }
