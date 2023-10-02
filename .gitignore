@@ -20,5 +20,9 @@
 # Go workspace file
 go.work
 
+#Files generated from the code, therefore not to be commited.
 images/
 History.txt
+
+#Default vscode configs
+.vscode
